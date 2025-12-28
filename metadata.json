@@ -1,0 +1,8 @@
+{
+  "name": "CSIF Prisiones Assistant",
+  "description": "An integral assistant for prison staff featuring shift management, training, news, and an AI-powered chatbot capable of analyzing text, images, and videos using Gemini.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
