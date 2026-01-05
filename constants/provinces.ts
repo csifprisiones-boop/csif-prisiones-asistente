@@ -1,0 +1,21 @@
+export const COMMUNITIES = [
+    "Andalucía",
+    "Aragón",
+    "Principado de Asturias",
+    "Islas Baleares",
+    "Canarias",
+    "Cantabria",
+    "Castilla-La Mancha",
+    "Castilla y León",
+    "Cataluña",
+    "Comunidad Valenciana",
+    "Extremadura",
+    "Galicia",
+    "La Rioja",
+    "Comunidad de Madrid",
+    "Región de Murcia",
+    "Comunidad Foral de Navarra",
+    "País Vasco",
+    "Ciudad Autónoma de Ceuta",
+    "Ciudad Autónoma de Melilla"
+];

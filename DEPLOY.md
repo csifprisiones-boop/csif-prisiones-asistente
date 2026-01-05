@@ -69,3 +69,23 @@ git commit -m "Primer despliegue profesional"
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 5. ¡Listo! A partir de ahora, cualquier cambio que subas a GitHub actualizará tu web automáticamente.
+
+---
+
+## Cómo subir cambios nuevos (Día a día)
+Una vez que ya has conectado todo, cada vez que quieras subir una mejora que hayamos hecho, solo tienes que ejecutar estos 3 comandos en la terminal:
+
+1. **Preparar los archivos**:
+   ```bash
+   git add .
+   ```
+2. **Ponerle un nombre al cambio**:
+   ```bash
+   git commit -m "Explicación breve de lo que he cambiado"
+   ```
+3. **Subirlos a internet**:
+   ```bash
+   git push
+   ```
+
+¡Y Netlify detectará el cambio y actualizará tu web en un minuto!

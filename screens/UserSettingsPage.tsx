@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../components/AuthProvider';
+import { WORKSPACES_DATA, POSITIONS_LIST } from '../constants/workspaces';
+import { COMMUNITIES } from '../constants/provinces';
 
 const UserSettingsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -11,11 +13,17 @@ const UserSettingsPage: React.FC = () => {
         full_name: '',
         phone: '',
         workspace: '',
-        position: ''
+        position: '',
+        community: ''
     });
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [isCustomPosition, setIsCustomPosition] = useState(false);
+
+    const workspaces = Object.keys(WORKSPACES_DATA).sort();
+    const positions = POSITIONS_LIST.sort();
+    const communities = COMMUNITIES.sort((a, b) => a.localeCompare(b));
 
     useEffect(() => {
         if (user) {
@@ -32,12 +40,16 @@ const UserSettingsPage: React.FC = () => {
             .single();
 
         if (data) {
+            const pos = data.position || '';
+            const isCustom = pos && !POSITIONS_LIST.includes(pos);
             setProfile({
                 full_name: data.full_name || '',
                 phone: data.phone || '',
                 workspace: data.workspace || '',
-                position: data.position || ''
+                position: pos,
+                community: data.community || ''
             });
+            setIsCustomPosition(isCustom);
         }
     };
 
@@ -54,7 +66,8 @@ const UserSettingsPage: React.FC = () => {
                     full_name: profile.full_name,
                     phone: profile.phone,
                     workspace: profile.workspace,
-                    position: profile.position
+                    position: profile.position,
+                    community: profile.community
                 })
                 .eq('id', user?.id);
 
@@ -145,24 +158,65 @@ const UserSettingsPage: React.FC = () => {
                                 />
                             </div>
                             <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Comunidad Autónoma</label>
+                                <select
+                                    value={profile.community}
+                                    onChange={(e) => setProfile({ ...profile, community: e.target.value })}
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 ring-primary outline-none transition-all appearance-none"
+                                >
+                                    <option value="">Selecciona una comunidad</option>
+                                    {communities.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Centro de Trabajo</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={profile.workspace}
                                     onChange={(e) => setProfile({ ...profile, workspace: e.target.value })}
-                                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 ring-primary outline-none transition-all"
-                                    placeholder="Ej: C.P. Madrid VII"
-                                />
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 ring-primary outline-none transition-all appearance-none"
+                                >
+                                    <option value="">Selecciona un centro</option>
+                                    {workspaces.map(w => (
+                                        <option key={w} value={w}>{w}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Puesto de Trabajo</label>
-                                <input
-                                    type="text"
-                                    value={profile.position}
-                                    onChange={(e) => setProfile({ ...profile, position: e.target.value })}
-                                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 ring-primary outline-none transition-all"
-                                    placeholder="Ej: V1, Oficinas, Área Mixta..."
-                                />
+                                <select
+                                    value={isCustomPosition ? 'OTRO' : profile.position}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === 'OTRO') {
+                                            setIsCustomPosition(true);
+                                            setProfile({ ...profile, position: '' });
+                                        } else {
+                                            setIsCustomPosition(false);
+                                            setProfile({ ...profile, position: val });
+                                        }
+                                    }}
+                                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 ring-primary outline-none transition-all appearance-none"
+                                >
+                                    <option value="">Selecciona un puesto</option>
+                                    {positions.map(p => (
+                                        <option key={p} value={p}>{p}</option>
+                                    ))}
+                                    <option value="OTRO">OTRO (Especificar...)</option>
+                                </select>
+                                {isCustomPosition && (
+                                    <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                        <input
+                                            type="text"
+                                            value={profile.position}
+                                            onChange={(e) => setProfile({ ...profile, position: e.target.value })}
+                                            placeholder="Escribe tu puesto de trabajo"
+                                            className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 ring-primary outline-none transition-all"
+                                            autoFocus
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

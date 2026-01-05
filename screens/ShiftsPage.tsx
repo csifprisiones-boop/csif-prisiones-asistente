@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '../components/BottomNavigation';
 import { supabase } from '../services/supabase';
-import { ShiftRecord, ShiftExchange, ShiftType } from '../types';
+import { ShiftRecord, ShiftExchange, ShiftType, OccasionType } from '../types';
 import { useAuth } from '../components/AuthProvider';
 
 const SHIFT_TYPES: { type: ShiftType; label: string; color: string }[] = [
@@ -14,6 +14,16 @@ const SHIFT_TYPES: { type: ShiftType; label: string; color: string }[] = [
   { type: 'GL', label: 'G. Localizada', color: 'bg-blue-400' },
   { type: 'GF', label: 'G. Física', color: 'bg-blue-600' },
   { type: 'L', label: 'Libre', color: 'bg-gray-400' },
+];
+
+const OCCASIONS: { type: OccasionType; label: string; icon: string; color: string }[] = [
+  { type: 'birthday', label: 'Cumpleaños', icon: 'cake', color: 'text-pink-500' },
+  { type: 'meeting', label: 'Reunión', icon: 'groups', color: 'text-blue-500' },
+  { type: 'medical', label: 'Médico', icon: 'medical_services', color: 'text-red-500' },
+  { type: 'workshop', label: 'Taller', icon: 'build', color: 'text-orange-500' },
+  { type: 'party', label: 'Fiesta', icon: 'celebration', color: 'text-purple-500' },
+  { type: 'sport', label: 'Deporte', icon: 'sports_soccer', color: 'text-green-500' },
+  { type: 'shopping', label: 'Compras', icon: 'shopping_cart', color: 'text-amber-500' }
 ];
 
 const ShiftsPage: React.FC = () => {
@@ -36,9 +46,10 @@ const ShiftsPage: React.FC = () => {
   const [filterWorkspace, setFilterWorkspace] = useState<string>('all');
 
   // Paint Mode State
-  const [activePaintShift, setActivePaintShift] = useState<ShiftType | null>(null);
+  const [activePaintShift, setActivePaintShift] = useState<ShiftType | 'eraser' | null>(null);
+  const [activePaintOccasion, setActivePaintOccasion] = useState<OccasionType | 'eraser' | null>(null);
 
-  const [userProfile, setUserProfile] = useState<{ workspace?: string; position?: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ workspace?: string; position?: string; community?: string; role?: string } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [manualRoleOverride, setManualRoleOverride] = useState<'interior' | 'sanitario' | null>(null);
 
@@ -59,7 +70,7 @@ const ShiftsPage: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      supabase.from('profiles').select('workspace, position, role').eq('id', user.id).single()
+      supabase.from('profiles').select('workspace, position, role, community').eq('id', user.id).single()
         .then(({ data }) => {
           setUserProfile(data);
           if (data?.role === 'admin') setIsAdmin(true);
@@ -146,56 +157,50 @@ const ShiftsPage: React.FC = () => {
     const filtered: Record<string, string> = {};
 
     Object.entries(targetHolidays).forEach(([date, data]) => {
-      // Logic for regional filtering
       if (!data.region) {
         filtered[date] = data.name; // National
       } else {
-        // Simple region check
         const userReg = userRegion.toLowerCase();
         const holiReg = data.region.toLowerCase();
+        const matches = (keyword: string) => userReg.includes(keyword.toLowerCase()) && holiReg.includes(keyword.toLowerCase());
 
-        // Match specific rules
-        if (userReg.includes('madrid') && holiReg.includes('madrid')) filtered[date] = data.name;
-        else if (userReg.includes('andalucía') && holiReg.includes('andalucía')) filtered[date] = data.name;
-        else if (userReg.includes('aragón') && holiReg.includes('aragón')) filtered[date] = data.name;
-        else if (userReg.includes('baleares') || userReg.includes('illes balears')) {
+        if (matches('madrid')) filtered[date] = data.name;
+        else if (matches('andalucía')) filtered[date] = data.name;
+        else if (matches('aragón')) filtered[date] = data.name;
+        else if (userReg.includes('baleares') || userReg.includes('balears')) {
           if (holiReg.includes('baleares') || holiReg.includes('balears')) filtered[date] = data.name;
         }
-        else if (userReg.includes('canarias') && holiReg.includes('canarias')) filtered[date] = data.name;
-        else if (userReg.includes('cantabria') && holiReg.includes('cantabria')) filtered[date] = data.name;
-        else if (userReg.includes('castilla-la mancha') && holiReg.includes('castilla-la mancha')) filtered[date] = data.name;
+        else if (matches('canarias')) filtered[date] = data.name;
+        else if (matches('cantabria')) filtered[date] = data.name;
+        else if (matches('castilla-la mancha')) filtered[date] = data.name;
         else if (userReg.includes('castilla y león') && holiReg.includes('león')) filtered[date] = data.name;
-        else if (userReg.includes('catalunya') && holiReg.includes('catalunya')) filtered[date] = data.name;
-        else if (userReg.includes('valenciana') && holiReg.includes('valenciana')) filtered[date] = data.name;
-        else if (userReg.includes('galicia') && holiReg.includes('galicia')) filtered[date] = data.name;
-        else if (userReg.includes('extremadura') && holiReg.includes('extremadura')) filtered[date] = data.name;
-        else if (userReg.includes('murcia') && holiReg.includes('murcia')) filtered[date] = data.name;
-        else if (userReg.includes('asturias') && holiReg.includes('asturias')) filtered[date] = data.name;
-        else if (userReg.includes('rioja') && holiReg.includes('rioja')) filtered[date] = data.name;
-        else if (userReg.includes('navarra') && holiReg.includes('navarra')) filtered[date] = data.name;
-        else if (userReg.includes('ceuta') && holiReg.includes('ceuta')) filtered[date] = data.name;
-        else if (userReg.includes('melilla') && holiReg.includes('melilla')) filtered[date] = data.name;
+        else if ((userReg.includes('catalunya') || userReg.includes('cataluña')) && holiReg.includes('catalunya')) filtered[date] = data.name;
+        else if (matches('valenciana')) filtered[date] = data.name;
+        else if (matches('galicia')) filtered[date] = data.name;
+        else if (matches('extremadura')) filtered[date] = data.name;
+        else if (matches('murcia')) filtered[date] = data.name;
+        else if (matches('asturias')) filtered[date] = data.name;
+        else if (matches('rioja')) filtered[date] = data.name;
+        else if (matches('navarra')) filtered[date] = data.name;
+        else if (matches('vasco')) filtered[date] = data.name;
+        else if (matches('ceuta')) filtered[date] = data.name;
+        else if (matches('melilla')) filtered[date] = data.name;
 
-        // Shared regional holidays (special cases like Jueves Santo)
+        // Shared regional holidays
         if (holiReg === 'jueves santo') {
-          // Celebrated in all except Catalunya and Valenciana
-          if (!userReg.includes('catalunya') && !userReg.includes('valenciana')) filtered[date] = data.name;
-        }
-        if (holiReg === 'lunes de pascua') {
-          // Catalunya, Baleares, Valenciana, Navarra, País Vasco, Rioja
-          const pascuaRegions = ['catalunya', 'baleares', 'valenciana', 'navarra', 'vasco', 'rioja'];
-          if (pascuaRegions.some(pr => userReg.includes(pr))) filtered[date] = data.name;
-        }
-        if (holiReg === 'san josé') {
-          // Usually Murcia, Valenciana, and some others variably
+          const isCatVal = userReg.includes('catalunya') || userReg.includes('cataluña') || userReg.includes('valenciana');
+          if (!isCatVal) filtered[date] = data.name;
+        } else if (holiReg === 'lunes de pascua') {
+          const isLunesPascuaReg = userReg.includes('catalunya') || userReg.includes('cataluña') ||
+            userReg.includes('baleares') || userReg.includes('balears') ||
+            userReg.includes('valenciana') || userReg.includes('navarra') ||
+            userReg.includes('vasco') || userReg.includes('rioja');
+          if (isLunesPascuaReg) filtered[date] = data.name;
+        } else if (holiReg === 'san josé') {
           if (userReg.includes('murcia') || userReg.includes('valenciana') || userReg.includes('galicia') || userReg.includes('vasco') || userReg.includes('castilla y león')) filtered[date] = data.name;
-        }
-        if (holiReg === 'santiago') {
-          // Galicia, Madrid, Navarra, País Vasco...
+        } else if (holiReg === 'santiago') {
           if (userReg.includes('galicia') || userReg.includes('madrid') || userReg.includes('navarra') || userReg.includes('vasco')) filtered[date] = data.name;
-        }
-        if (holiReg === 'traslado') {
-          // Holidays moved to Monday (often depends on region, but BOE usually sets them for most)
+        } else if (holiReg === 'traslado' || holiReg.includes('traslado')) {
           filtered[date] = data.name;
         }
       }
@@ -263,7 +268,13 @@ const ShiftsPage: React.FC = () => {
       const month = currentDate.getMonth();
       const startDate = new Date(year, month, 1);
       const endDate = new Date(year, month + 1, 0);
-      query = query.gte('date', toLocalISODate(startDate)).lte('date', toLocalISODate(endDate));
+
+      // If it's December, fetch the whole year for annual stats
+      if (month === 11) {
+        query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
+      } else {
+        query = query.gte('date', toLocalISODate(startDate)).lte('date', toLocalISODate(endDate));
+      }
     } else {
       const year = currentDate.getFullYear();
       query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
@@ -368,27 +379,97 @@ const ShiftsPage: React.FC = () => {
   const handleDeleteShift = async (dateToDelete?: Date) => {
     if (!user) return;
     const dateStr = toLocalISODate(dateToDelete || selectedDate);
+    const existing = shifts[dateStr];
 
-    const { error } = await supabase
-      .from('shifts')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('date', dateStr);
+    if (existing?.occasion) {
+      // If there's an occasion, don't delete the row, just set shift to 'L' (Libre)
+      const { error } = await supabase
+        .from('shifts')
+        .update({ shift_type: 'L' })
+        .eq('user_id', user.id)
+        .eq('date', dateStr);
 
-    if (error) {
-      alert('Error al borrar el turno');
-      console.error(error);
+      if (error) {
+        alert('Error al resetear el turno');
+      } else {
+        setShifts(prev => ({
+          ...prev,
+          [dateStr]: { ...prev[dateStr], shift_type: 'L' }
+        }));
+      }
     } else {
-      setShifts(prev => {
-        const newShifts = { ...prev };
-        delete newShifts[dateStr];
-        return newShifts;
-      });
-      setShowShiftSelector(false);
+      // No occasion, safe to delete the whole record
+      const { error } = await supabase
+        .from('shifts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('date', dateStr);
+
+      if (error) {
+        alert('Error al borrar el turno');
+        console.error(error);
+      } else {
+        setShifts(prev => {
+          const newShifts = { ...prev };
+          delete newShifts[dateStr];
+          return newShifts;
+        });
+        setShowShiftSelector(false);
+      }
     }
   };
 
-  const handleToggleAlarm = async (enabled: boolean, minutes: number = 60) => {
+  const handleSaveOccasion = async (occasion: OccasionType, dateToSave?: Date) => {
+    if (!user) return;
+    const dateStr = toLocalISODate(dateToSave || selectedDate);
+
+    const { error } = await supabase
+      .from('shifts')
+      .upsert({
+        user_id: user.id,
+        date: dateStr,
+        occasion: occasion,
+        shift_type: shifts[dateStr]?.shift_type || 'L'
+      }, { onConflict: 'user_id,date' });
+
+    if (error) {
+      alert('Error al guardar la ocasión');
+      console.error(error);
+    } else {
+      setShifts(prev => ({
+        ...prev,
+        [dateStr]: { ...(prev[dateStr] || { id: 'temp', user_id: user.id, date: dateStr, shift_type: 'L' }), occasion: occasion }
+      }));
+    }
+  };
+
+  const handleDeleteOccasion = async (dateToDelete?: Date) => {
+    if (!user) return;
+    const dateStr = toLocalISODate(dateToDelete || selectedDate);
+
+    const { error } = await supabase
+      .from('shifts')
+      .upsert({
+        user_id: user.id,
+        date: dateStr,
+        occasion: null,
+        shift_type: shifts[dateStr]?.shift_type || 'L'
+      }, { onConflict: 'user_id,date' });
+
+    if (error) {
+      alert('Error al borrar la ocasión');
+      console.error(error);
+    } else {
+      setShifts(prev => {
+        if (!prev[dateStr]) return prev;
+        const updated = { ...prev[dateStr] };
+        delete updated.occasion;
+        return { ...prev, [dateStr]: updated };
+      });
+    }
+  };
+
+  const handleToggleAlarm = async (enabled: boolean, minutes: number | null = 60, alarmTime: string | null = null) => {
     if (!user || !selectedDate) return;
     const dateStr = toLocalISODate(selectedDate);
 
@@ -399,6 +480,7 @@ const ShiftsPage: React.FC = () => {
         date: dateStr,
         alarm_enabled: enabled,
         alarm_minutes_before: minutes,
+        alarm_time: alarmTime,
         shift_type: shifts[dateStr]?.shift_type || 'L'
       }, { onConflict: 'user_id,date' });
 
@@ -408,7 +490,12 @@ const ShiftsPage: React.FC = () => {
     } else {
       setShifts(prev => ({
         ...prev,
-        [dateStr]: { ...(prev[dateStr] || { id: 'temp', user_id: user.id, date: dateStr, shift_type: shifts[dateStr]?.shift_type || 'L' }), alarm_enabled: enabled, alarm_minutes_before: minutes }
+        [dateStr]: {
+          ...(prev[dateStr] || { id: 'temp', user_id: user.id, date: dateStr, shift_type: 'L' }),
+          alarm_enabled: enabled,
+          alarm_minutes_before: minutes,
+          alarm_time: alarmTime
+        }
       }));
 
       if (enabled && typeof window !== 'undefined' && 'Notification' in window) {
@@ -551,6 +638,7 @@ const ShiftsPage: React.FC = () => {
   const getMonthStats = () => {
     const counts: Record<string, number> = {};
     let totalHours = 0;
+    let annualTotalHours = 0;
     let specialEarnings = 0;
 
     const hourMap: Record<ShiftType, number> = {
@@ -570,7 +658,7 @@ const ShiftsPage: React.FC = () => {
     let isFisica = pos.includes('física') || pos.includes('fisica');
     let isLocalizada = pos.includes('localizada');
 
-    const currentYearHolidays = getHolidaysForYear(currentDate.getFullYear(), userProfile?.workspace || 'nacional');
+    const currentYearHolidays = getHolidaysForYear(currentDate.getFullYear(), userProfile?.community || 'nacional');
     const holidayKeys = Object.keys(currentYearHolidays);
 
     const getSpecialPayment = (dateStr: string, type: ShiftType) => {
@@ -630,11 +718,31 @@ const ShiftsPage: React.FC = () => {
     Object.values(shifts).forEach(s => {
       const shift = s as ShiftRecord;
       const sDate = new Date(shift.date);
+      const isWeekend = sDate.getDay() === 0 || sDate.getDay() === 6;
+
+      // Annual calculation
+      if (sDate.getFullYear() === currentDate.getFullYear()) {
+        let annualHrs = hourMap[shift.shift_type] || 0;
+        const m = sDate.getMonth() + 1;
+        const d = sDate.getDate();
+        const md = `${m}-${d}`;
+        const currentYearHolidays = getHolidaysForYear(currentDate.getFullYear(), userProfile?.community || 'nacional');
+        const holidayKeys = Object.keys(currentYearHolidays);
+        const isHoliday = holidayKeys.includes(md);
+
+        if ((shift.shift_type === 'GF' || shift.shift_type === 'GL') && (isWeekend || isHoliday)) {
+          annualHrs = 24;
+        }
+        annualTotalHours += annualHrs;
+      }
+
+      // Monthly calculation (existing logic)
       if (sDate.getMonth() === currentDate.getMonth() && sDate.getFullYear() === currentDate.getFullYear()) {
         const m = sDate.getMonth() + 1;
         const d = sDate.getDate();
         const md = `${m}-${d}`;
-        const isWeekend = sDate.getDay() === 0 || sDate.getDay() === 6;
+        const currentYearHolidays = getHolidaysForYear(currentDate.getFullYear(), userProfile?.community || 'nacional');
+        const holidayKeys = Object.keys(currentYearHolidays);
         const isHoliday = holidayKeys.includes(md);
 
         counts[shift.shift_type] = (counts[shift.shift_type] || 0) + 1;
@@ -648,10 +756,10 @@ const ShiftsPage: React.FC = () => {
       }
     });
 
-    return { counts, totalHours, specialEarnings };
+    return { counts, totalHours, annualTotalHours, specialEarnings };
   };
 
-  const { counts, totalHours, specialEarnings } = getMonthStats();
+  const { counts, totalHours, annualTotalHours, specialEarnings } = getMonthStats();
   const estimatedEarnings = specialEarnings;
 
   const getDaysInMonth = (date: Date) => {
@@ -689,7 +797,7 @@ const ShiftsPage: React.FC = () => {
       const isSelected = selectedDate.getDate() === d && selectedDate.getMonth() === currentDate.getMonth();
       const isToday = new Date().toDateString() === date.toDateString();
 
-      const holiesData = getHolidaysForYear(currentDate.getFullYear(), userProfile?.workspace || 'nacional');
+      const holiesData = getHolidaysForYear(currentDate.getFullYear(), userProfile?.community || 'nacional');
       const holiesKeys = Object.keys(holiesData);
       const isFestivo = holiesKeys.includes(`${currentDate.getMonth() + 1}-${d}`);
 
@@ -701,23 +809,34 @@ const ShiftsPage: React.FC = () => {
               handleDeleteShift(date);
             } else if (activePaintShift) {
               handleSaveShift(activePaintShift, date);
+            } else if (activePaintOccasion === 'eraser') {
+              handleDeleteOccasion(date);
+            } else if (activePaintOccasion) {
+              handleSaveOccasion(activePaintOccasion, date);
             } else {
               setSelectedDate(date);
             }
           }}
           className={`h-9 w-full flex items-center justify-center relative rounded-md transition-all ${isSelected ? 'ring-2 ring-blue-500 z-10' : ''}`}
         >
-          <span className={`text-sm font-medium z-10 flex items-center justify-center ${isFestivo ? 'size-7 rounded-full border border-red-500/50 text-red-600 dark:text-red-400' : ''} ${isSelected || shift ? 'text-white !border-white/50' : (isFestivo ? '' : 'text-gray-700 dark:text-gray-300')} ${isToday && !shift && !isSelected ? 'text-primary font-bold' : ''}`}>
+          <span className={`text-sm font-medium z-10 flex items-center justify-center ${isFestivo ? 'size-7 rounded-full border border-red-500/50 text-red-600 dark:text-red-400' : ''} ${isSelected || (shift && shift.shift_type !== 'L') ? 'text-white !border-white/50' : (isFestivo ? '' : 'text-gray-700 dark:text-gray-300')} ${isToday && (!shift || shift.shift_type === 'L') && !isSelected ? 'text-primary font-bold' : ''}`}>
             {d}
           </span>
-          {shift && (
+          {shift && shift.shift_type !== 'L' && (
             <span className={`absolute inset-0 rounded-md ${SHIFT_TYPES.find(t => t.type === shift.shift_type)?.color || 'bg-gray-400'} opacity-80`}></span>
           )}
           {shift?.notes && (
-            <div className="absolute top-0.5 right-0.5 size-1 bg-yellow-400 rounded-full z-20 shadow-sm border border-white dark:border-gray-900"></div>
+            <div className="absolute top-0.5 left-0.5 size-1 bg-yellow-400 rounded-full z-20 shadow-sm border border-white dark:border-gray-900"></div>
           )}
           {shift?.alarm_enabled && (
             <span className="material-symbols-outlined absolute bottom-0 right-0 size-2 text-[8px] text-white/70 z-20">notifications</span>
+          )}
+          {shift?.occasion && (
+            <div className="absolute -top-1 -right-1 z-30 flex items-center justify-center size-4 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
+              <span className={`material-symbols-outlined text-[10px] ${OCCASIONS.find(o => o.type === shift.occasion)?.color}`}>
+                {OCCASIONS.find(o => o.type === shift.occasion)?.icon}
+              </span>
+            </div>
           )}
         </button>
       );
@@ -777,10 +896,15 @@ const ShiftsPage: React.FC = () => {
           </button>
           <h1 className="text-lg font-bold tracking-tight">Gestión de Turnos</h1>
           <button
-            onClick={() => setViewMode(viewMode === 'month' ? 'year' : 'month')}
-            className="flex items-center justify-center h-8 px-3 rounded-full bg-primary/10 text-primary text-xs font-bold"
+            onClick={() => {
+              const today = new Date();
+              setCurrentDate(today);
+              setSelectedDate(today);
+              setViewMode('month');
+            }}
+            className="flex items-center justify-center h-8 px-4 rounded-full bg-primary text-white text-xs font-black shadow-sm active:scale-95 transition-all"
           >
-            {viewMode === 'month' ? 'Vista Anual' : 'Vista Mensual'}
+            Hoy
           </button>
         </div>
       </header>
@@ -810,19 +934,26 @@ const ShiftsPage: React.FC = () => {
           <div className="px-4 mb-2">
             <div className="flex flex-col gap-2 bg-white dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Modo Pintar</span>
-                {activePaintShift && (
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Turnos</span>
+                {(activePaintShift || activePaintOccasion) && (
                   <button
-                    onClick={() => setActivePaintShift(null)}
-                    className="text-[10px] font-bold text-red-500 uppercase"
+                    onClick={() => {
+                      setActivePaintShift(null);
+                      setActivePaintOccasion(null);
+                    }}
+                    className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1"
                   >
-                    Desactivar
+                    <span className="material-symbols-outlined text-[14px]">cancel</span>
+                    Desactivar modo pintar
                   </button>
                 )}
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 <button
-                  onClick={() => setActivePaintShift(activePaintShift === 'eraser' ? null : ('eraser' as any))}
+                  onClick={() => {
+                    setActivePaintOccasion(null);
+                    setActivePaintShift(activePaintShift === 'eraser' ? null : 'eraser');
+                  }}
                   className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 flex items-center gap-1 ${activePaintShift === 'eraser'
                     ? `bg-red-500 text-white border-transparent scale-105 shadow-md`
                     : `border-transparent bg-gray-100 dark:bg-gray-800 text-red-500`
@@ -834,7 +965,10 @@ const ShiftsPage: React.FC = () => {
                 {SHIFT_TYPES.map(st => (
                   <button
                     key={st.type}
-                    onClick={() => setActivePaintShift(activePaintShift === st.type ? null : st.type)}
+                    onClick={() => {
+                      setActivePaintOccasion(null);
+                      setActivePaintShift(activePaintShift === st.type ? null : st.type);
+                    }}
                     className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 ${activePaintShift === st.type
                       ? `${st.color} text-white border-transparent scale-105 shadow-md`
                       : `border-transparent bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400`
@@ -844,10 +978,48 @@ const ShiftsPage: React.FC = () => {
                   </button>
                 ))}
               </div>
+
+              <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ocasiones Especiales</span>
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                  <button
+                    onClick={() => {
+                      setActivePaintShift(null);
+                      setActivePaintOccasion(activePaintOccasion === 'eraser' ? null : 'eraser');
+                    }}
+                    className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 flex items-center gap-1 ${activePaintOccasion === 'eraser'
+                      ? `bg-red-200 text-red-700 border-transparent scale-105 shadow-md`
+                      : `border-transparent bg-gray-100 dark:bg-gray-800 text-red-400`
+                      }`}
+                  >
+                    <span className="material-symbols-outlined text-sm">ink_eraser</span>
+                    QUITAR
+                  </button>
+                  {OCCASIONS.map(occ => (
+                    <button
+                      key={occ.type}
+                      onClick={() => {
+                        setActivePaintShift(null);
+                        setActivePaintOccasion(activePaintOccasion === occ.type ? null : occ.type);
+                      }}
+                      className={`flex-shrink-0 size-9 flex items-center justify-center rounded-lg transition-all border-2 ${activePaintOccasion === occ.type
+                        ? `bg-primary/20 border-primary scale-110 shadow-md`
+                        : `border-transparent bg-gray-100 dark:bg-gray-800`
+                        }`}
+                      title={occ.label}
+                    >
+                      <span className={`material-symbols-outlined ${occ.color} text-lg`}>{occ.icon}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <p className="text-[9px] text-gray-400 italic">
                 {activePaintShift
-                  ? `Pulsando días asignarás el turno "${SHIFT_TYPES.find(t => t.type === activePaintShift)?.label}"`
-                  : 'Selecciona un turno arriba para pintar días rápidamente'}
+                  ? `Pulsando días asignarás el turno "${SHIFT_TYPES.find(t => t.type === activePaintShift)?.label || 'Borrador'}"`
+                  : activePaintOccasion
+                    ? `Pulsando días asignarás "${OCCASIONS.find(o => o.type === activePaintOccasion)?.label || 'Quitar ocasión'}"`
+                    : 'Selecciona un elemento para pintar días rápidamente'}
               </p>
             </div>
           </div>
@@ -865,7 +1037,7 @@ const ShiftsPage: React.FC = () => {
                   <span className="text-base font-bold capitalize">
                     {currentDate.toLocaleDateString('es-ES', viewMode === 'month' ? { month: 'long', year: 'numeric' } : { year: 'numeric' })}
                   </span>
-                  {viewMode === 'year' && <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resumen Anual</span>}
+                  {/* Removed Resumen Anual */}
                 </div>
                 <button
                   onClick={() => setCurrentDate(new Date(currentDate.getFullYear() + (viewMode === 'year' ? 1 : 0), currentDate.getMonth() + (viewMode === 'month' ? 1 : 0), 1))}
@@ -886,7 +1058,12 @@ const ShiftsPage: React.FC = () => {
                   <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-around">
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] font-bold text-gray-400 uppercase">Horas</span>
-                      <span className="text-sm font-black text-primary">{totalHours}h</span>
+                      <span className="text-sm font-black text-primary">
+                        {totalHours}h
+                        {currentDate.getMonth() === 11 && (
+                          <span className="text-[10px] ml-1 opacity-60 font-medium">({annualTotalHours}h total año)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="flex items-center gap-1">
@@ -923,9 +1100,9 @@ const ShiftsPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="text-primary text-[10px] font-black uppercase tracking-widest">{selectedDateStr}</p>
-                    {getHolidaysForYear(selectedDate.getFullYear(), userProfile?.workspace || 'nacional')[`${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`] && (
+                    {getHolidaysForYear(selectedDate.getFullYear(), userProfile?.community || 'nacional')[`${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`] && (
                       <p className="text-gray-400 text-[9px] font-bold">
-                        • {getHolidaysForYear(selectedDate.getFullYear(), userProfile?.workspace || 'nacional')[`${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`]}
+                        • {getHolidaysForYear(selectedDate.getFullYear(), userProfile?.community || 'nacional')[`${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`]}
                       </p>
                     )}
                     {selectedShift?.alarm_enabled && (
@@ -937,6 +1114,16 @@ const ShiftsPage: React.FC = () => {
                       ? SHIFT_TYPES.find(t => t.type === selectedShift.shift_type)?.label
                       : 'Sin turno asignado'}
                   </h2>
+                  {selectedShift?.occasion && (
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-left-2 duration-300">
+                      <span className={`material-symbols-outlined text-base ${OCCASIONS.find(o => o.type === selectedShift.occasion)?.color}`}>
+                        {OCCASIONS.find(o => o.type === selectedShift.occasion)?.icon}
+                      </span>
+                      <span className="text-[10px] font-black text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        {OCCASIONS.find(o => o.type === selectedShift.occasion)?.label}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {selectedShift && (
                   <div className={`size-10 rounded-2xl flex items-center justify-center text-white font-black shadow-lg ${SHIFT_TYPES.find(t => t.type === selectedShift.shift_type)?.color}`}>
@@ -967,20 +1154,72 @@ const ShiftsPage: React.FC = () => {
 
               {/* Quick Actions & Alarms */}
               <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-gray-400">alarm</span>
-                    <div>
-                      <p className="text-xs font-bold dark:text-white">Alarma Automática</p>
-                      <p className="text-[10px] text-gray-500">60 min antes del turno</p>
+                <div className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-gray-400">alarm</span>
+                      <div>
+                        <p className="text-xs font-bold dark:text-white">Alarma Automática</p>
+                        <p className="text-[10px] text-gray-500">Notificar antes del turno</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleToggleAlarm(!selectedShift?.alarm_enabled, selectedShift?.alarm_minutes_before ?? (selectedShift?.alarm_time ? null : 60), selectedShift?.alarm_time)}
+                      className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${selectedShift?.alarm_enabled ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+                    >
+                      <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${selectedShift?.alarm_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleToggleAlarm(!selectedShift?.alarm_enabled)}
-                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${selectedShift?.alarm_enabled ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
-                  >
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${selectedShift?.alarm_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
+
+                  {selectedShift?.alarm_enabled && (
+                    <div className="flex flex-col gap-3 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">TIPO DE ALARMA</span>
+                        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                          <button
+                            onClick={() => handleToggleAlarm(true, 60, null)}
+                            className={`px-2 py-1 text-[9px] font-bold rounded-md transition-all ${selectedShift.alarm_minutes_before !== null ? 'bg-white dark:bg-surface-dark shadow-sm text-primary' : 'text-gray-500'}`}
+                          >
+                            Relativa
+                          </button>
+                          <button
+                            onClick={() => handleToggleAlarm(true, null, '08:00')}
+                            className={`px-2 py-1 text-[9px] font-bold rounded-md transition-all ${selectedShift.alarm_minutes_before === null ? 'bg-white dark:bg-surface-dark shadow-sm text-primary' : 'text-gray-500'}`}
+                          >
+                            Fija
+                          </button>
+                        </div>
+                      </div>
+
+                      {selectedShift.alarm_minutes_before !== null ? (
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium text-gray-500">Antelación:</span>
+                          <select
+                            value={selectedShift?.alarm_minutes_before || 60}
+                            onChange={(e) => handleToggleAlarm(true, parseInt(e.target.value), null)}
+                            className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] px-2 py-1 outline-none font-bold text-primary"
+                          >
+                            <option value="15">15 min antes</option>
+                            <option value="30">30 min antes</option>
+                            <option value="45">45 min antes</option>
+                            <option value="60">1 hora antes</option>
+                            <option value="90">1.5 horas antes</option>
+                            <option value="120">2 horas antes</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium text-gray-500">Hora exacta:</span>
+                          <input
+                            type="time"
+                            value={selectedShift?.alarm_time || '08:00'}
+                            onChange={(e) => handleToggleAlarm(true, null, e.target.value)}
+                            className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg text-xs px-2 py-1 outline-none font-bold text-primary"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
