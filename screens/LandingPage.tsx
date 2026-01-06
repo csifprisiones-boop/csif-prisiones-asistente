@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import csifLogo from '../csif-logo-green.png';
 
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
@@ -14,38 +15,36 @@ const LandingPage: React.FC = () => {
             title: 'Gestor de Turnos',
             desc: 'Calendario inteligente con cuadrantes y estadísticas automáticas.',
             icon: 'calendar_month',
-            color: 'bg-blue-500'
+            color: 'bg-emerald-500'
         },
         {
             title: 'Asistente IA',
             desc: 'Analiza documentos, normativas y vídeos con inteligencia artificial.',
             icon: 'smart_toy',
-            color: 'bg-green-500'
+            color: 'bg-csif-green'
         },
         {
             title: 'Biblioteca Legal',
             desc: 'Acceso instantáneo a toda la normativa penitenciaria oficial.',
             icon: 'library_books',
-            color: 'bg-purple-500'
+            color: 'bg-teal-600'
         }
     ];
 
     return (
-        <div className="min-h-screen bg-[#f5f6f8] dark:bg-[#101622] text-[#111318] dark:text-white font-display overflow-x-hidden selection:bg-primary selection:text-white">
+        <div className="min-h-screen bg-[#f5f6f8] dark:bg-[#101622] text-[#111318] dark:text-white font-display overflow-x-hidden selection:bg-csif-green selection:text-white">
             {/* Dynamic Background Elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary blur-[120px] rounded-full animate-pulse"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-csif-green blur-[120px] rounded-full animate-pulse delay-700"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-csif-green blur-[120px] rounded-full animate-pulse"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500 blur-[120px] rounded-full animate-pulse delay-700"></div>
             </div>
 
             {/* Navigation */}
             <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[-100%] opacity-0'}`}>
-                <div className="flex items-center gap-2">
-                    <div className="bg-white dark:bg-surface-dark p-1.5 rounded-xl shadow-soft">
-                        <img src="/csif-logo-3d.png" alt="CSIF" className="h-8 w-auto" />
-                    </div>
-                    <span className="font-extrabold text-sm tracking-tighter uppercase dark:text-white">
-                        Prisiones <span className="text-primary tracking-normal font-medium">Asistente</span>
+                <div className="flex items-center gap-3">
+                    <img src={csifLogo} alt="CSIF" className="h-10 w-auto" />
+                    <span className="font-extrabold text-sm tracking-tighter uppercase dark:text-white flex flex-col leading-none">
+                        Prisiones <span className="text-csif-green tracking-normal font-black">Asistente</span>
                     </span>
                 </div>
                 <button
@@ -59,27 +58,27 @@ const LandingPage: React.FC = () => {
             {/* Hero Section */}
             <main className="relative pt-32 pb-20 px-6 max-w-lg mx-auto flex flex-col items-center text-center">
                 {/* Animated Badge */}
-                <div className={`mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-1000 delay-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}>
+                <div className={`mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-csif-green/10 border border-csif-green/20 text-csif-green text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-1000 delay-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}>
                     <span className="material-symbols-outlined text-[14px]">verified</span>
-                    Plataforma Exclusiva CSIF
+                    Plataforma Oficial CSIF
                 </div>
 
                 {/* Main Title */}
                 <h1 className={`text-4xl sm:text-5xl font-black leading-[1.1] mb-6 tracking-tight transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
                     El Futuro del
-                    <span className="block text-primary">Trabajo Penitenciario</span>
+                    <span className="block text-csif-green">Trabajo Penitenciario</span>
                     ha llegado.
                 </h1>
 
                 <p className={`text-base text-text-sub-light dark:text-text-sub-dark mb-10 leading-relaxed transition-all duration-1000 delay-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-                    La herramienta todo-en-uno diseñada por profesionales para profesionales. Controla tus turnos, libera tu tiempo y consulta a la IA en segundos.
+                    La herramienta inteligente diseñada exclusivamente por CSIF para el personal penitenciario. Gestión avanzada y soporte IA en tu bolsillo.
                 </p>
 
                 {/* CTA Buttons */}
                 <div className={`flex flex-col w-full gap-4 mb-20 transition-all duration-1000 delay-900 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
                     <button
                         onClick={() => navigate('/login')}
-                        className="group relative w-full bg-primary py-5 rounded-[2rem] overflow-hidden shadow-[0_20px_40px_-10px_rgba(13,89,242,0.4)] hover:shadow-[0_25px_50px_-12px_rgba(13,89,242,0.5)] transition-all active:scale-95"
+                        className="group relative w-full bg-csif-green py-5 rounded-[2rem] overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,150,64,0.3)] hover:shadow-[0_25px_50px_-12px_rgba(0,150,64,0.4)] transition-all active:scale-95"
                     >
                         <div className="absolute inset-0 holographic-overlay opacity-30 group-hover:opacity-50"></div>
                         <span className="relative flex items-center justify-center gap-3 font-black text-white uppercase tracking-widest">
@@ -115,17 +114,17 @@ const LandingPage: React.FC = () => {
                 {/* Floating Stats */}
                 <div className={`mt-10 flex items-center justify-center gap-8 border-t border-gray-200 dark:border-gray-800 pt-10 w-full transition-all duration-1000 delay-[1800ms] ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
                     <div>
-                        <p className="text-2xl font-black text-primary">2k+</p>
+                        <p className="text-2xl font-black text-csif-green">2k+</p>
                         <p className="text-[10px] font-bold uppercase text-gray-400 tracking-tighter">Usuarios</p>
                     </div>
                     <div className="w-px h-8 bg-gray-200 dark:bg-gray-800"></div>
                     <div>
-                        <p className="text-2xl font-black text-primary">100%</p>
+                        <p className="text-2xl font-black text-csif-green">100%</p>
                         <p className="text-[10px] font-bold uppercase text-gray-400 tracking-tighter">Oficial CSIF</p>
                     </div>
                     <div className="w-px h-8 bg-gray-200 dark:bg-gray-800"></div>
                     <div>
-                        <p className="text-2xl font-black text-primary">24/7</p>
+                        <p className="text-2xl font-black text-csif-green">24/7</p>
                         <p className="text-[10px] font-bold uppercase text-gray-400 tracking-tighter">Soporte IA</p>
                     </div>
                 </div>

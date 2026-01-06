@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '../components/BottomNavigation';
 import { supabase } from '../services/supabase';
-import csifLogo from '../csif-logo-3d.png';
+import csifLogo from '../csif-logo-green.png';
 
 interface NewsItem {
   id: string;
@@ -91,14 +91,13 @@ const HomePage: React.FC = () => {
         <div
           onClick={() => navigate('/chat')}
           className="bg-cover bg-center flex flex-col justify-end overflow-hidden rounded-xl min-h-[180px] shadow-md relative group cursor-pointer transition-transform hover:scale-[1.01]"
-          style={{ backgroundImage: 'linear-gradient(180deg, rgba(13, 89, 242, 0.2) 0%, rgba(13, 89, 242, 0.8) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuC1xZiK3bUdzWc3Q0X4ar0xpTXZzw0akP-QpECSTlx2qq5_DN5ub81UPUZVsfpfmcia3HTng1v6wIHKJFRmZDALnaZ9cNH8bPtqLqszi5q6YGYCsVXhoXwmfO1nRYC0hSixrKDFqGpbeZ0wYvJ4EjCLl3yStjJC35t-KzsvNOyAPyfdIfL49EEvcoly4jMHqSrO52-WmZjuZ5drlJw8f_cTUGKCB_0uJI3hgy7IzJhgLANWvpZk5LMG_tdhsD-gHZedJhMAtl4uKgJh")' }}
+          style={{ backgroundImage: 'linear-gradient(180deg, rgba(0, 150, 64, 0.2) 0%, rgba(0, 150, 64, 0.8) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuC1xZiK3bUdzWc3Q0X4ar0xpTXZzw0akP-QpECSTlx2qq5_DN5ub81UPUZVsfpfmcia3HTng1v6wIHKJFRmZDALnaZ9cNH8bPtqLqszi5q6YGYCsVXhoXwmfO1nRYC0hSixrKDFqGpbeZ0wYvJ4EjCLl3yStjJC35t-KzsvNOyAPyfdIfL49EEvcoly4jMHqSrO52-WmZjuZ5drlJw8f_cTUGKCB_0uJI3hgy7IzJhgLANWvpZk5LMG_tdhsD-gHZedJhMAtl4uKgJh")' }}
         >
           <div className="absolute top-0 right-0 w-36 h-28 flex items-center justify-center -mr-4 -mt-4 z-10">
             <img
               src={csifLogo}
               alt="CSIF Logo"
               className="max-w-full max-h-full object-contain"
-              style={{ mixBlendMode: 'multiply' }}
             />
           </div>
           <div className="flex p-5 flex-col">
@@ -158,7 +157,7 @@ const HomePage: React.FC = () => {
       </div>
 
       <BottomNavigation />
-    </div>
+    </div >
   );
 };
 

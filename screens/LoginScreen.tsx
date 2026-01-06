@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
-import csifLogo from '../csif-logo-3d.png';
+import csifLogo from '../csif-logo-green.png';
 
 export const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -67,7 +67,6 @@ export const LoginScreen = () => {
                         src={csifLogo}
                         alt="CSIF Logo"
                         className="w-48 h-auto mb-2"
-                        style={{ mixBlendMode: 'multiply' }}
                     />
                     <h2 className="text-2xl font-black text-gray-900 tracking-tight text-center">
                         {isLogin ? 'Acceso Asistente CSIF' : 'Registro Nuevo Usuario'}
@@ -81,7 +80,7 @@ export const LoginScreen = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                             required
                         />
                     </div>
@@ -92,7 +91,7 @@ export const LoginScreen = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                             required
                         />
                     </div>
@@ -105,7 +104,7 @@ export const LoginScreen = () => {
                                     type="text"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                                     required
                                 />
                             </div>
@@ -117,7 +116,7 @@ export const LoginScreen = () => {
                                     onChange={(e) => setDniFragment(e.target.value.toUpperCase())}
                                     placeholder="Ej: 12345A"
                                     maxLength={6}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                                     required
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
@@ -134,7 +133,7 @@ export const LoginScreen = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
                     >
                         {loading ? 'Procesando...' : (isLogin ? 'Entrar' : 'Registrarse')}
                     </button>
@@ -146,7 +145,7 @@ export const LoginScreen = () => {
                             setIsLogin(!isLogin);
                             setError(null);
                         }}
-                        className="text-sm text-blue-600 hover:text-blue-500"
+                        className="text-sm text-primary hover:text-primary-dark"
                     >
                         {isLogin ? '¿No tienes cuenta? Crear una ahora' : '¿Ya tienes cuenta? Iniciar Sesión'}
                     </button>

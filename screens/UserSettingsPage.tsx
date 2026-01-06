@@ -230,7 +230,7 @@ const UserSettingsPage: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading ? 'Guardando...' : (
                             <>

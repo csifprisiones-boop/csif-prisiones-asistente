@@ -165,8 +165,8 @@ const ChatPage: React.FC = () => {
             )}
             <div className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`p-4 rounded-2xl shadow-sm ${msg.role === 'user'
-                  ? 'bg-primary text-white rounded-br-none'
-                  : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-bl-none'
+                ? 'bg-primary text-white rounded-br-none'
+                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-bl-none'
                 }`}>
                 {msg.attachments && msg.attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
@@ -231,7 +231,7 @@ const ChatPage: React.FC = () => {
             <button
               key={txt}
               onClick={() => setInput(txt)}
-              className="shrink-0 px-4 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary dark:text-blue-400 text-sm font-medium transition-colors border border-transparent hover:border-primary/30"
+              className="shrink-0 px-4 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors border border-transparent hover:border-primary/30"
             >
               {txt}
             </button>
@@ -266,8 +266,8 @@ const ChatPage: React.FC = () => {
             onClick={handleSend}
             disabled={(!input.trim() && attachments.length === 0) || isLoading}
             className={`size-11 flex items-center justify-center rounded-full shadow-md shrink-0 transition-all ${(!input.trim() && attachments.length === 0) || isLoading
-                ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
-                : 'bg-primary hover:bg-blue-700 text-white'
+              ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
+              : 'bg-primary hover:bg-primary-dark text-white'
               }`}
           >
             <span className="material-symbols-outlined text-[20px] ml-0.5">send</span>
