@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '../components/BottomNavigation';
 import { supabase } from '../services/supabase';
-import { ShiftRecord, ShiftExchange, ShiftType, OccasionType } from '../types';
+import { ShiftRecord, ShiftExchange, ShiftType, OccasionType, LeaveType } from '../types';
 import { useAuth } from '../components/AuthProvider';
 
 const SHIFT_TYPES: { type: ShiftType; label: string; color: string }[] = [
@@ -24,6 +24,12 @@ const OCCASIONS: { type: OccasionType; label: string; icon: string; color: strin
   { type: 'party', label: 'Fiesta', icon: 'celebration', color: 'text-purple-500' },
   { type: 'sport', label: 'Deporte', icon: 'sports_soccer', color: 'text-green-500' },
   { type: 'shopping', label: 'Compras', icon: 'shopping_cart', color: 'text-amber-500' }
+];
+
+const LEAVE_TYPES: { type: LeaveType; label: string; icon: string; color: string }[] = [
+  { type: 'vacation', label: 'Vacaciones', icon: 'flight_takeoff', color: 'text-emerald-500' },
+  { type: 'seniority', label: 'AP Antigüedad', icon: 'history', color: 'text-amber-600' },
+  { type: 'owed', label: 'Días Debidos', icon: 'account_balance_wallet', color: 'text-purple-600' },
 ];
 
 const ShiftsPage: React.FC = () => {
@@ -48,8 +54,17 @@ const ShiftsPage: React.FC = () => {
   // Paint Mode State
   const [activePaintShift, setActivePaintShift] = useState<ShiftType | 'eraser' | null>(null);
   const [activePaintOccasion, setActivePaintOccasion] = useState<OccasionType | 'eraser' | null>(null);
+  const [activePaintLeave, setActivePaintLeave] = useState<LeaveType | 'eraser' | null>(null);
 
-  const [userProfile, setUserProfile] = useState<{ workspace?: string; position?: string; community?: string; role?: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{
+    workspace?: string;
+    position?: string;
+    community?: string;
+    role?: string;
+    vacation_days_limit?: number;
+    seniority_days_limit?: number;
+    owed_days_limit?: number;
+  } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [manualRoleOverride, setManualRoleOverride] = useState<'interior' | 'sanitario' | null>(null);
 
@@ -70,7 +85,7 @@ const ShiftsPage: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      supabase.from('profiles').select('workspace, position, role, community').eq('id', user.id).single()
+      supabase.from('profiles').select('workspace, position, role, community, vacation_days_limit, seniority_days_limit, owed_days_limit').eq('id', user.id).single()
         .then(({ data }) => {
           setUserProfile(data);
           if (data?.role === 'admin') setIsAdmin(true);
@@ -263,22 +278,8 @@ const ShiftsPage: React.FC = () => {
 
     let query = supabase.from('shifts').select('*').eq('user_id', user.id);
 
-    if (viewMode === 'month') {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-
-      // If it's December, fetch the whole year for annual stats
-      if (month === 11) {
-        query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
-      } else {
-        query = query.gte('date', toLocalISODate(startDate)).lte('date', toLocalISODate(endDate));
-      }
-    } else {
-      const year = currentDate.getFullYear();
-      query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
-    }
+    const year = currentDate.getFullYear();
+    query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
 
     const { data, error } = await query;
 
@@ -466,6 +467,73 @@ const ShiftsPage: React.FC = () => {
         delete updated.occasion;
         return { ...prev, [dateStr]: updated };
       });
+    }
+  };
+
+  const handleSaveLeave = async (leaveType: LeaveType, dateToSave?: Date) => {
+    if (!user) return;
+    const dateStr = toLocalISODate(dateToSave || selectedDate);
+
+    const { error } = await supabase
+      .from('shifts')
+      .upsert({
+        user_id: user.id,
+        date: dateStr,
+        leave_type: leaveType,
+        shift_type: shifts[dateStr]?.shift_type || 'L'
+      }, { onConflict: 'user_id,date' });
+
+    if (error) {
+      alert('Error al guardar el permiso');
+      console.error(error);
+    } else {
+      setShifts(prev => ({
+        ...prev,
+        [dateStr]: { ...(prev[dateStr] || { id: 'temp', user_id: user.id, date: dateStr, shift_type: 'L' }), leave_type: leaveType }
+      }));
+    }
+  };
+
+  const handleDeleteLeave = async (dateToDelete?: Date) => {
+    if (!user) return;
+    const dateStr = toLocalISODate(dateToDelete || selectedDate);
+
+    const { error } = await supabase
+      .from('shifts')
+      .upsert({
+        user_id: user.id,
+        date: dateStr,
+        leave_type: null,
+        shift_type: shifts[dateStr]?.shift_type || 'L'
+      }, { onConflict: 'user_id,date' });
+
+    if (error) {
+      alert('Error al borrar el permiso');
+      console.error(error);
+    } else {
+      setShifts(prev => {
+        if (!prev[dateStr]) return prev;
+        const updated = { ...prev[dateStr] };
+        delete updated.leave_type;
+        return { ...prev, [dateStr]: updated };
+      });
+    }
+  };
+
+  const updateLeaveLimit = async (limitType: 'vacation' | 'seniority' | 'owed', value: number) => {
+    if (!user) return;
+    const column = limitType === 'vacation' ? 'vacation_days_limit' :
+      limitType === 'seniority' ? 'seniority_days_limit' : 'owed_days_limit';
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ [column]: value })
+      .eq('id', user.id);
+
+    if (error) {
+      alert('Error al actualizar el límite');
+    } else {
+      setUserProfile(prev => prev ? { ...prev, [column]: value } : null);
     }
   };
 
@@ -813,6 +881,10 @@ const ShiftsPage: React.FC = () => {
               handleDeleteOccasion(date);
             } else if (activePaintOccasion) {
               handleSaveOccasion(activePaintOccasion, date);
+            } else if (activePaintLeave === 'eraser') {
+              handleDeleteLeave(date);
+            } else if (activePaintLeave) {
+              handleSaveLeave(activePaintLeave, date);
             } else {
               setSelectedDate(date);
             }
@@ -835,6 +907,13 @@ const ShiftsPage: React.FC = () => {
             <div className="absolute -top-1 -right-1 z-30 flex items-center justify-center size-4 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
               <span className={`material-symbols-outlined text-[10px] ${OCCASIONS.find(o => o.type === shift.occasion)?.color}`}>
                 {OCCASIONS.find(o => o.type === shift.occasion)?.icon}
+              </span>
+            </div>
+          )}
+          {shift?.leave_type && (
+            <div className="absolute -bottom-1 -left-1 z-30 flex items-center justify-center size-4 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
+              <span className={`material-symbols-outlined text-[10px] ${LEAVE_TYPES.find(l => l.type === shift.leave_type)?.color}`}>
+                {LEAVE_TYPES.find(l => l.type === shift.leave_type)?.icon}
               </span>
             </div>
           )}
@@ -935,11 +1014,12 @@ const ShiftsPage: React.FC = () => {
             <div className="flex flex-col gap-2 bg-white dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Turnos</span>
-                {(activePaintShift || activePaintOccasion) && (
+                {(activePaintShift || activePaintOccasion || activePaintLeave) && (
                   <button
                     onClick={() => {
                       setActivePaintShift(null);
                       setActivePaintOccasion(null);
+                      setActivePaintLeave(null);
                     }}
                     className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1"
                   >
@@ -952,6 +1032,7 @@ const ShiftsPage: React.FC = () => {
                 <button
                   onClick={() => {
                     setActivePaintOccasion(null);
+                    setActivePaintLeave(null);
                     setActivePaintShift(activePaintShift === 'eraser' ? null : 'eraser');
                   }}
                   className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 flex items-center gap-1 ${activePaintShift === 'eraser'
@@ -967,6 +1048,7 @@ const ShiftsPage: React.FC = () => {
                     key={st.type}
                     onClick={() => {
                       setActivePaintOccasion(null);
+                      setActivePaintLeave(null);
                       setActivePaintShift(activePaintShift === st.type ? null : st.type);
                     }}
                     className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 ${activePaintShift === st.type
@@ -985,6 +1067,7 @@ const ShiftsPage: React.FC = () => {
                   <button
                     onClick={() => {
                       setActivePaintShift(null);
+                      setActivePaintLeave(null);
                       setActivePaintOccasion(activePaintOccasion === 'eraser' ? null : 'eraser');
                     }}
                     className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 flex items-center gap-1 ${activePaintOccasion === 'eraser'
@@ -1000,6 +1083,7 @@ const ShiftsPage: React.FC = () => {
                       key={occ.type}
                       onClick={() => {
                         setActivePaintShift(null);
+                        setActivePaintLeave(null);
                         setActivePaintOccasion(activePaintOccasion === occ.type ? null : occ.type);
                       }}
                       className={`flex-shrink-0 size-9 flex items-center justify-center rounded-lg transition-all border-2 ${activePaintOccasion === occ.type
@@ -1014,12 +1098,102 @@ const ShiftsPage: React.FC = () => {
                 </div>
               </div>
 
+              <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Permisos</span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    <button
+                      onClick={() => {
+                        setActivePaintShift(null);
+                        setActivePaintOccasion(null);
+                        setActivePaintLeave(activePaintLeave === 'eraser' ? null : 'eraser');
+                      }}
+                      className={`flex-shrink-0 min-w-[50px] px-3 py-2 rounded-lg text-xs font-bold transition-all border-2 flex items-center gap-1 ${activePaintLeave === 'eraser'
+                        ? `bg-red-100 text-red-600 border-transparent scale-105 shadow-md`
+                        : `border-transparent bg-gray-100 dark:bg-gray-800 text-red-400`
+                        }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">block</span>
+                      QUITAR
+                    </button>
+                    {LEAVE_TYPES.map(leave => {
+                      const used = (Object.values(shifts) as ShiftRecord[]).filter(s => s.leave_type === leave.type).length;
+                      let limit = 0;
+                      if (leave.type === 'vacation') limit = userProfile?.vacation_days_limit || 22;
+                      if (leave.type === 'seniority') limit = userProfile?.seniority_days_limit || 6;
+                      if (leave.type === 'owed') limit = userProfile?.owed_days_limit || 0;
+
+                      return (
+                        <div key={leave.type} className="flex flex-col gap-1 items-center">
+                          <button
+                            onClick={() => {
+                              setActivePaintShift(null);
+                              setActivePaintOccasion(null);
+                              setActivePaintLeave(activePaintLeave === leave.type ? null : leave.type);
+                            }}
+                            className={`flex-shrink-0 px-3 py-2 rounded-lg transition-all border-2 flex items-center gap-2 ${activePaintLeave === leave.type
+                              ? `bg-primary/20 border-primary scale-105 shadow-md`
+                              : `border-transparent bg-gray-100 dark:bg-gray-800`
+                              }`}
+                          >
+                            <span className={`material-symbols-outlined ${leave.color} text-lg`}>{leave.icon}</span>
+                            <div className="flex flex-col items-start leading-none">
+                              <span className="text-[9px] font-black uppercase text-gray-500">{leave.label.split(' ')[0]}</span>
+                              <span className={`text-[12px] font-black ${used >= limit && limit > 0 ? 'text-red-500' : 'text-primary'}`}>
+                                {limit > 0 ? limit - used : used}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Limits Selectors Row */}
+                  <div className="flex items-center gap-3 py-1 px-1 bg-gray-50 dark:bg-gray-800/30 rounded-lg overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[8px] font-black text-gray-400 uppercase">Tot. Vac:</span>
+                      <select
+                        value={userProfile?.vacation_days_limit || 22}
+                        onChange={(e) => updateLeaveLimit('vacation', parseInt(e.target.value))}
+                        className="text-[10px] font-bold bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded px-1 py-0.5 outline-none text-primary"
+                      >
+                        {[22, 23, 24, 25, 26].map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 dark:border-gray-700 pl-3">
+                      <span className="text-[8px] font-black text-gray-400 uppercase">Tot. AP:</span>
+                      <select
+                        value={userProfile?.seniority_days_limit || 6}
+                        onChange={(e) => updateLeaveLimit('seniority', parseInt(e.target.value))}
+                        className="text-[10px] font-bold bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded px-1 py-0.5 outline-none text-primary"
+                      >
+                        {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 dark:border-gray-700 pl-3">
+                      <span className="text-[8px] font-black text-gray-400 uppercase">Tot. Deb:</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={userProfile?.owed_days_limit || 0}
+                        onChange={(e) => updateLeaveLimit('owed', parseInt(e.target.value) || 0)}
+                        className="w-10 text-[10px] font-bold bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded px-1 py-0.5 outline-none text-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <p className="text-[9px] text-gray-400 italic">
                 {activePaintShift
                   ? `Pulsando días asignarás el turno "${SHIFT_TYPES.find(t => t.type === activePaintShift)?.label || 'Borrador'}"`
                   : activePaintOccasion
                     ? `Pulsando días asignarás "${OCCASIONS.find(o => o.type === activePaintOccasion)?.label || 'Quitar ocasión'}"`
-                    : 'Selecciona un elemento para pintar días rápidamente'}
+                    : activePaintLeave
+                      ? `Pulsando días asignarás permiso de "${LEAVE_TYPES.find(l => l.type === activePaintLeave)?.label || 'Quitar permiso'}"`
+                      : 'Selecciona un elemento para pintar días rápidamente'}
               </p>
             </div>
           </div>
@@ -1121,6 +1295,16 @@ const ShiftsPage: React.FC = () => {
                       </span>
                       <span className="text-[10px] font-black text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         {OCCASIONS.find(o => o.type === selectedShift.occasion)?.label}
+                      </span>
+                    </div>
+                  )}
+                  {selectedShift?.leave_type && (
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-left-2 duration-300">
+                      <span className={`material-symbols-outlined text-base ${LEAVE_TYPES.find(l => l.type === selectedShift.leave_type)?.color}`}>
+                        {LEAVE_TYPES.find(l => l.type === selectedShift.leave_type)?.icon}
+                      </span>
+                      <span className="text-[10px] font-black text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        {LEAVE_TYPES.find(l => l.type === selectedShift.leave_type)?.label}
                       </span>
                     </div>
                   )}

@@ -16,6 +16,7 @@ export interface Attachment {
 
 export type ShiftType = 'M' | 'T' | 'N' | 'M/T' | 'M/N' | 'L' | 'GL' | 'GF';
 export type OccasionType = 'birthday' | 'meeting' | 'medical' | 'workshop' | 'party' | 'sport' | 'shopping';
+export type LeaveType = 'vacation' | 'seniority' | 'owed';
 
 export interface ShiftRecord {
   id: string;
@@ -27,6 +28,7 @@ export interface ShiftRecord {
   alarm_minutes_before?: number;
   alarm_time?: string; // HH:mm
   occasion?: OccasionType;
+  leave_type?: LeaveType;
 }
 
 export interface ShiftExchange {
