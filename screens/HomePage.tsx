@@ -72,7 +72,10 @@ const HomePage: React.FC = () => {
     <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl pb-24">
       {/* TopAppBar */}
       <div className="flex items-center bg-white dark:bg-[#1A202C] p-4 pb-2 justify-between sticky top-0 z-20 shadow-sm border-b border-gray-100 dark:border-gray-800">
-        <div className="text-[#111318] dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+        <div
+          onClick={() => navigate('/')}
+          className="text-[#111318] dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+        >
           <span className="material-symbols-outlined text-[24px]">menu</span>
         </div>
         <h2 className="text-[#111318] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Asistente CSIF IIPP</h2>

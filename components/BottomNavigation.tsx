@@ -10,10 +10,10 @@ const BottomNavigation: React.FC = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 flex h-16 w-full max-w-md mx-auto items-center justify-around bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
       <button
-        onClick={() => navigate('/')}
-        className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/') ? 'text-primary' : 'text-gray-500 dark:text-gray-400 hover:text-primary'}`}
+        onClick={() => navigate('/home')}
+        className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/home') ? 'text-primary' : 'text-gray-500 dark:text-gray-400 hover:text-primary'}`}
       >
-        <span className={`material-symbols-outlined text-[24px] ${isActive('/') ? 'filled' : ''}`}>home</span>
+        <span className={`material-symbols-outlined text-[24px] ${isActive('/home') ? 'filled' : ''}`}>home</span>
         <span className="text-[10px] font-medium">Inicio</span>
       </button>
       <button

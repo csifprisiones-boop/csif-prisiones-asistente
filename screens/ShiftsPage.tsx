@@ -105,30 +105,32 @@ const ShiftsPage: React.FC = () => {
       '1-1': { name: 'Año Nuevo' },
       '1-6': { name: 'Epifanía del Señor' },
       '2-28': { name: 'Día de Andalucía', region: 'Andalucía' },
-      '3-2': { name: 'Día de Baleares (Traslado)', region: 'Baleares' },
-      '3-19': { name: 'San José', region: 'San José' }, // San José is special, many regions have it
-      '4-2': { name: 'Jueves Santo', region: 'Jueves Santo' }, // Jueves Santo is celebrated in most except Catalunya/Valenciana
+      '3-2': { name: 'Día de las Illes Balears', region: 'Baleares' },
+      '3-19': { name: 'San José', region: 'San José' },
+      '3-20': { name: 'Estatuto de Autonomía / Eid Fitr', region: 'Melilla' },
+      '4-2': { name: 'Jueves Santo', region: 'Jueves Santo' },
       '4-3': { name: 'Viernes Santo' },
       '4-6': { name: 'Lunes de Pascua', region: 'Lunes de Pascua' },
-      '4-23': { name: 'Día de Aragón / CyL', region: 'Aragón/CyL' },
+      '4-23': { name: 'Día de Aragón / CyL', region: 'Aragón/Castilla y León' },
       '5-1': { name: 'Fiesta del Trabajo' },
-      '5-2': { name: 'Fiesta de la Comunidad (Madrid)', region: 'Madrid' },
-      '5-27': { name: 'Fiesta del Sacrificio', region: 'Ceuta/Melilla' },
+      '5-2': { name: 'Fiesta de la Comunidad de Madrid', region: 'Madrid' },
+      '5-27': { name: 'Fiesta del Sacrificio (Aid El Adha)', region: 'Ceuta/Melilla' },
       '5-30': { name: 'Día de Canarias', region: 'Canarias' },
       '6-4': { name: 'Corpus Christi', region: 'Castilla-La Mancha' },
       '6-9': { name: 'Día de Murcia / La Rioja', region: 'Murcia/Rioja' },
       '6-24': { name: 'San Juan', region: 'San Juan' },
       '7-25': { name: 'Santiago Apóstol', region: 'Santiago' },
-      '7-28': { name: 'Día de Cantabria', region: 'Cantabria' },
+      '7-28': { name: 'Día de las Instituciones', region: 'Cantabria' },
+      '8-5': { name: 'Nuestra Sra. de África', region: 'Ceuta' },
       '8-15': { name: 'Asunción de la Virgen' },
       '9-2': { name: 'Día de Ceuta', region: 'Ceuta' },
-      '9-8': { name: 'Asturias / Extremadura', region: 'Asturias/Extremadura' },
-      '9-11': { name: 'Festa de Catalunya', region: 'Catalunya' },
-      '9-15': { name: 'La Bien Aparecida (Cantabria)', region: 'Cantabria' },
+      '9-8': { name: 'Día de Asturias / Extremadura', region: 'Asturias/Extremadura' },
+      '9-11': { name: 'Festa de la Diada', region: 'Catalunya' },
+      '9-15': { name: 'La Bien Aparecida', region: 'Cantabria' },
       '10-9': { name: 'Día de la C. Valenciana', region: 'Valenciana' },
       '10-12': { name: 'Fiesta Nacional de España' },
-      '11-2': { name: 'Todos los Santos (Traslado)', region: 'Traslado' },
-      '12-7': { name: 'Día Constitución (Traslado)', region: 'Traslado' },
+      '11-2': { name: 'Todos los Santos (Traslado)', region: 'Traslado1Nov' },
+      '12-7': { name: 'Día de la Constitución (Traslado)', region: 'Traslado6Dic' },
       '12-8': { name: 'La Inmaculada Concepción' },
       '12-25': { name: 'Natividad del Señor' },
       '12-26': { name: 'San Esteban / Sant Esteve', region: 'Catalunya/Baleares' }
@@ -201,7 +203,7 @@ const ShiftsPage: React.FC = () => {
         else if (matches('ceuta')) filtered[date] = data.name;
         else if (matches('melilla')) filtered[date] = data.name;
 
-        // Shared regional holidays
+        // Shared regional holidays logic
         if (holiReg === 'jueves santo') {
           const isCatVal = userReg.includes('catalunya') || userReg.includes('cataluña') || userReg.includes('valenciana');
           if (!isCatVal) filtered[date] = data.name;
@@ -209,12 +211,18 @@ const ShiftsPage: React.FC = () => {
           const isLunesPascuaReg = userReg.includes('catalunya') || userReg.includes('cataluña') ||
             userReg.includes('baleares') || userReg.includes('balears') ||
             userReg.includes('valenciana') || userReg.includes('navarra') ||
-            userReg.includes('vasco') || userReg.includes('rioja');
+            userReg.includes('vasco') || userReg.includes('rioja') || userReg.includes('mancha');
           if (isLunesPascuaReg) filtered[date] = data.name;
         } else if (holiReg === 'san josé') {
-          if (userReg.includes('murcia') || userReg.includes('valenciana') || userReg.includes('galicia') || userReg.includes('vasco') || userReg.includes('castilla y león')) filtered[date] = data.name;
+          if (userReg.includes('murcia') || userReg.includes('valenciana') || userReg.includes('galicia') || userReg.includes('vasco') || userReg.includes('navarra')) filtered[date] = data.name;
         } else if (holiReg === 'santiago') {
-          if (userReg.includes('galicia') || userReg.includes('madrid') || userReg.includes('navarra') || userReg.includes('vasco')) filtered[date] = data.name;
+          if (userReg.includes('galicia') || userReg.includes('vasco')) filtered[date] = data.name;
+        } else if (holiReg === 'traslado1nov') {
+          const isTraslado1Nov = ['andalucía', 'aragón', 'asturias', 'canarias', 'mancha', 'león', 'madrid', 'navarra'].some(r => userReg.includes(r));
+          if (isTraslado1Nov) filtered[date] = data.name;
+        } else if (holiReg === 'traslado6dic') {
+          const isTraslado6Dic = ['andalucía', 'aragón', 'asturias', 'cantabria', 'león', 'extremadura', 'madrid', 'murcia', 'rioja', 'melilla'].some(r => userReg.includes(r));
+          if (isTraslado6Dic) filtered[date] = data.name;
         } else if (holiReg === 'traslado' || holiReg.includes('traslado')) {
           filtered[date] = data.name;
         }
