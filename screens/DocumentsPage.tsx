@@ -201,7 +201,7 @@ const DocumentsPage: React.FC = () => {
                         <span className="material-symbols-outlined text-[18px]">info</span>
                         Base de Conocimiento
                     </p>
-                    <p>Añade aquí normativas, acuerdos o documentos internos. El asistente utilizará esta información para responder de forma precisa cuando actives el modo "Solo Documentación".</p>
+                    <p>Consulta aquí normativas, acuerdos o documentos internos. El asistente utilizará esta información para responder de forma precisa cuando actives el modo "Solo Documentación".</p>
                 </div>
 
                 {isAdmin && (

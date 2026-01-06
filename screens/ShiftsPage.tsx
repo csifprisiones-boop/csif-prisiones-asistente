@@ -904,15 +904,15 @@ const ShiftsPage: React.FC = () => {
             <span className="material-symbols-outlined absolute bottom-0 right-0 size-2 text-[8px] text-white/70 z-20">notifications</span>
           )}
           {shift?.occasion && (
-            <div className="absolute -top-1 -right-1 z-30 flex items-center justify-center size-4 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
-              <span className={`material-symbols-outlined text-[10px] ${OCCASIONS.find(o => o.type === shift.occasion)?.color}`}>
+            <div className="absolute -top-1.5 -right-1.5 z-30 flex items-center justify-center size-6 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
+              <span className={`material-symbols-outlined text-[14px] ${OCCASIONS.find(o => o.type === shift.occasion)?.color}`}>
                 {OCCASIONS.find(o => o.type === shift.occasion)?.icon}
               </span>
             </div>
           )}
           {shift?.leave_type && (
-            <div className="absolute -bottom-1 -left-1 z-30 flex items-center justify-center size-4 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
-              <span className={`material-symbols-outlined text-[10px] ${LEAVE_TYPES.find(l => l.type === shift.leave_type)?.color}`}>
+            <div className="absolute -bottom-1.5 -left-1.5 z-30 flex items-center justify-center size-6 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
+              <span className={`material-symbols-outlined text-[14px] ${LEAVE_TYPES.find(l => l.type === shift.leave_type)?.color}`}>
                 {LEAVE_TYPES.find(l => l.type === shift.leave_type)?.icon}
               </span>
             </div>
@@ -1092,7 +1092,7 @@ const ShiftsPage: React.FC = () => {
                         }`}
                       title={occ.label}
                     >
-                      <span className={`material-symbols-outlined ${occ.color} text-lg`}>{occ.icon}</span>
+                      <span className={`material-symbols-outlined ${occ.color} text-4xl`}>{occ.icon}</span>
                     </button>
                   ))}
                 </div>
@@ -1136,7 +1136,7 @@ const ShiftsPage: React.FC = () => {
                               : `border-transparent bg-gray-100 dark:bg-gray-800`
                               }`}
                           >
-                            <span className={`material-symbols-outlined ${leave.color} text-lg`}>{leave.icon}</span>
+                            <span className={`material-symbols-outlined ${leave.color} text-3xl`}>{leave.icon}</span>
                             <div className="flex flex-col items-start leading-none">
                               <span className="text-[9px] font-black uppercase text-gray-500">{leave.label.split(' ')[0]}</span>
                               <span className={`text-[12px] font-black ${used >= limit && limit > 0 ? 'text-red-500' : 'text-primary'}`}>
@@ -1290,7 +1290,7 @@ const ShiftsPage: React.FC = () => {
                   </h2>
                   {selectedShift?.occasion && (
                     <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <span className={`material-symbols-outlined text-base ${OCCASIONS.find(o => o.type === selectedShift.occasion)?.color}`}>
+                      <span className={`material-symbols-outlined text-2xl ${OCCASIONS.find(o => o.type === selectedShift.occasion)?.color}`}>
                         {OCCASIONS.find(o => o.type === selectedShift.occasion)?.icon}
                       </span>
                       <span className="text-[10px] font-black text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -1300,7 +1300,7 @@ const ShiftsPage: React.FC = () => {
                   )}
                   {selectedShift?.leave_type && (
                     <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-left-2 duration-300">
-                      <span className={`material-symbols-outlined text-base ${LEAVE_TYPES.find(l => l.type === selectedShift.leave_type)?.color}`}>
+                      <span className={`material-symbols-outlined text-2xl ${LEAVE_TYPES.find(l => l.type === selectedShift.leave_type)?.color}`}>
                         {LEAVE_TYPES.find(l => l.type === selectedShift.leave_type)?.icon}
                       </span>
                       <span className="text-[10px] font-black text-gray-500 dark:text-gray-300 uppercase tracking-wider">
