@@ -150,7 +150,10 @@ async function sendMessageWithGemini(history: Message[], prompt: string, attachm
   } catch (error: any) {
     console.error("Gemini Error:", error);
     if (error.message?.includes('429')) {
-      return "Error: Se ha excedido la cuota mensual de Gemini. Por favor, configura una API Key de Groq para continuar sin límites.";
+      if (!GROQ_KEY) {
+        return "⚠️ ATENCIÓN: Gemini se ha agotado y NO se detecta la clave de Groq en Netlify. Por favor, añade la variable VITE_GROQ_API_KEY en el panel de Netlify para que el asistente vuelva a funcionar.";
+      }
+      return "Error: Ambas plataformas (Groq y Gemini) han alcanzado su límite. Inténtalo de nuevo en unos minutos.";
     }
     return "Error al conectar con los servicios de IA.";
   }
