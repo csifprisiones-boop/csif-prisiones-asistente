@@ -38,22 +38,45 @@ export const sendMessageToAI = async (
   systemContextOverride?: string
 ): Promise<string> => {
 
+  // Debug logs (visible in browser console to help us diagnose)
+  console.log("Checking API Keys...");
+  console.log("Groq Key present:", !!GROQ_KEY);
+  console.log("Gemini Key present:", !!GEMINI_KEY);
+
   const hasVideo = attachments.some(a => a.type === 'video');
   const defaultContext = "Eres un asistente virtual útil y profesional para CSIF Prisiones (sindicato de funcionarios de prisiones). Ayudas con turnos, normativa, y análisis de documentos o videos de seguridad. Sé breve y conciso.";
   const finalSystemPrompt = systemContextOverride || defaultContext;
 
-  // 1. If we have a video or NO Groq key, we use Gemini
-  if (hasVideo || !GROQ_KEY) {
+  // 1. If we have a video, always use Gemini (Groq doesn't support video)
+  if (hasVideo) {
+    if (!GEMINI_KEY) return "Error: Para analizar vídeos se requiere la clave de Gemini.";
     return sendMessageWithGemini(history, currentMessage, attachments, finalSystemPrompt);
   }
 
-  // 2. Otherwise, use Groq (Fast & High Limits)
-  try {
-    return await sendMessageWithGroq(currentMessage, attachments, finalSystemPrompt);
-  } catch (error: any) {
-    console.warn("Groq Error, falling back to Gemini:", error);
+  // 2. Try Groq if key is available
+  if (GROQ_KEY) {
+    try {
+      console.log("Attempting to use Groq engine...");
+      const result = await sendMessageWithGroq(currentMessage, attachments, finalSystemPrompt);
+      return result;
+    } catch (error: any) {
+      console.error("Groq Error:", error);
+      // Fallback only if Gemini key exists
+      if (GEMINI_KEY) {
+        console.log("Falling back to Gemini due to Groq error...");
+        return sendMessageWithGemini(history, currentMessage, attachments, finalSystemPrompt);
+      }
+      return `Error en el servicio principal (Groq): ${error.message}. Además, no hay clave de respaldo para Gemini configurada.`;
+    }
+  }
+
+  // 3. Fallback to Gemini if no Groq key but Gemini key exists
+  if (GEMINI_KEY) {
+    console.log("No Groq key found. Using Gemini directly...");
     return sendMessageWithGemini(history, currentMessage, attachments, finalSystemPrompt);
   }
+
+  return "Error: No se ha detectado ninguna clave de API (VITE_GROQ_API_KEY o VITE_GEMINI_API_KEY). Por favor, configúralas en el panel de Netlify.";
 };
 
 // --- GROQ IMPLEMENTATION ---
