@@ -25,6 +25,9 @@ const HomePage: React.FC = () => {
 
   const fetchNews = async () => {
     try {
+      // Refresh news from Edge Function first
+      await supabase.functions.invoke('fetch-news');
+
       const { data, error } = await supabase
         .from('news')
         .select('*')
@@ -35,6 +38,13 @@ const HomePage: React.FC = () => {
       if (data) setNews(data);
     } catch (error) {
       console.error('Error fetching news:', error);
+      // Fallback: try to load existing news if function fails
+      const { data } = await supabase
+        .from('news')
+        .select('*')
+        .order('published_at', { ascending: false })
+        .limit(5);
+      if (data) setNews(data);
     } finally {
       setLoading(false);
     }
