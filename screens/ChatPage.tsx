@@ -134,7 +134,7 @@ const ChatPage: React.FC = () => {
               <h2 className="text-slate-900 dark:text-white text-base font-bold leading-tight">Asistente CSIF</h2>
               <div className="flex items-center gap-1">
                 <span className="text-green-600 dark:text-green-400 text-xs font-medium">En línea</span>
-                <span className="text-slate-400 text-[10px]">• Gemini Pro</span>
+                <span className="text-slate-400 text-[10px]">• Motor IA Híbrido</span>
               </div>
             </div>
           </div>

@@ -65,9 +65,10 @@ git commit -m "Primer despliegue profesional"
 3. En la configuración de construcción ("Build settings"), comprueba que coincida con esto:
    - **Build command**: `npm run build`
    - **Publish directory**: `dist`
-4. **MUY IMPORTANTE**: Ve a **Site configuration** > **Environment variables** y añade las claves de Supabase allí:
+4. **MUY IMPORTANTE**: Ve a **Site configuration** > **Environment variables** y añade las claves allí:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_GROQ_API_KEY` (Clave gratuita de Groq para que la IA no tenga límites)
 5. ¡Listo! A partir de ahora, cualquier cambio que subas a GitHub actualizará tu web automáticamente.
 
 ---
