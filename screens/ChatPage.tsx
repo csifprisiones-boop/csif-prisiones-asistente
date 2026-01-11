@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Message, Attachment } from '../types';
 import { sendMessageToGemini, fileToBase64, embedText } from '../services/geminiService';
 import { supabase } from '../services/supabase';
+import { PERMITS_DATA } from '../constants/permits';
 
 const ChatPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ const ChatPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [useLocalContext, setUseLocalContext] = useState(false);
+  const [showPermitSelector, setShowPermitSelector] = useState(false);
+  const [userCategory, setUserCategory] = useState<'funcionario' | 'laboral'>('funcionario');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,13 +33,14 @@ const ChatPage: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-    if ((!input.trim() && attachments.length === 0) || isLoading) return;
+  const handleSend = async (overrideText?: string) => {
+    const messageText = overrideText || input;
+    if ((!messageText.trim() && attachments.length === 0) || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      text: input,
+      text: messageText,
       timestamp: new Date(),
       attachments: [...attachments]
     };
@@ -66,6 +70,11 @@ const ChatPage: React.FC = () => {
             systemContextOverride = "El usuario quiere consultar la documentación oficial, pero no se ha encontrado información relevante en la base de datos para esta consulta. Responde educadamente que no has encontrado esa información en los documentos subidos.";
           }
         }
+      }
+
+      // Specialized Permisos Context
+      if (messageText.includes('SOLICITAR PERMISO:')) {
+        systemContextOverride = "Eres un experto en normativa de la Administración General del Estado (AGE), específicamente en el TREBEP (para funcionarios) y el IV Convenio Único (para personal laboral). Responde con precisión técnica basándote SOLO en fuentes oficiales. Explica los requisitos, duración y parentescos si aplica.";
       }
 
       const responseText = await sendMessageToGemini(messages, userMessage.text, userMessage.attachments, systemContextOverride);
@@ -227,16 +236,72 @@ const ChatPage: React.FC = () => {
 
       <footer className="flex flex-col bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 pb-safe">
         <div className="w-full overflow-x-auto no-scrollbar py-3 px-4 flex gap-2 border-b border-slate-50 dark:border-slate-800/50">
-          {['Solicitar permiso', 'Normativa vigente', 'Bajas médicas'].map((txt) => (
+          <button
+            onClick={() => setShowPermitSelector(!showPermitSelector)}
+            className={`shrink-0 px-4 py-1.5 rounded-full flex items-center gap-2 transition-all border ${showPermitSelector ? 'bg-primary text-white border-primary shadow-md' : 'bg-primary/10 text-primary border-transparent hover:bg-primary/20 hover:border-primary/30'}`}
+          >
+            <span className="material-symbols-outlined text-[18px]">assignment_turned_in</span>
+            <span className="text-sm font-bold uppercase tracking-tight">Solicitar permiso</span>
+          </button>
+
+          <button
+            onClick={() => {
+              const text = "RECURSO DENEGACIÓN PERMISO: Por favor, redacta un modelo de recurso de alzada ante la denegación de un permiso solicitado, para presentarlo en la Oficina de Personal de mi centro penitenciario.";
+              handleSend(text);
+            }}
+            className="shrink-0 px-4 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-bold uppercase tracking-tight transition-colors border border-transparent hover:border-red-500/30 flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">gavel</span>
+            RECURSO
+          </button>
+
+          {['Normativa vigente', 'Bajas médicas'].map((txt) => (
             <button
               key={txt}
               onClick={() => setInput(txt)}
-              className="shrink-0 px-4 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors border border-transparent hover:border-primary/30"
+              className="shrink-0 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium transition-colors border border-transparent"
             >
               {txt}
             </button>
           ))}
         </div>
+
+        {/* Permit Selector Modal-like Panel */}
+        {showPermitSelector && (
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-200 dark:border-slate-800 animate-fade-in-up">
+            <div className="flex gap-2 mb-4 bg-white dark:bg-slate-900 p-1 rounded-xl w-fit border border-slate-100 dark:border-slate-800 shadow-sm">
+              <button
+                onClick={() => setUserCategory('funcionario')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${userCategory === 'funcionario' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Funcionario
+              </button>
+              <button
+                onClick={() => setUserCategory('laboral')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${userCategory === 'laboral' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Laboral
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto no-scrollbar pr-1">
+              {PERMITS_DATA[userCategory].map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    const text = `SOLICITAR PERMISO: Soy personal ${userCategory.toUpperCase()} y quiero solicitar el permiso de "${p.label}". Explícame los requisitos y duración basándote en fuentes oficiales.`;
+                    handleSend(text);
+                    setShowPermitSelector(false);
+                  }}
+                  className="w-full bg-white dark:bg-slate-900 p-3 rounded-xl text-left border border-slate-100 dark:border-slate-800 hover:border-primary transition-all shadow-sm flex flex-col gap-1 group"
+                >
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">{p.label}</span>
+                  <span className="text-[11px] text-slate-500 italic line-clamp-1">{p.detail}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="p-3 sm:p-4 flex items-end gap-2 pb-6 sm:pb-4">
           <input
             type="file"
