@@ -308,8 +308,8 @@ const ShiftsPage: React.FC = () => {
       .from('shift_exchanges')
       .select(`
         *,
-        profiles!shift_exchanges_user_id_fkey(full_name, workspace, position),
-        accepter:profiles!shift_exchanges_accepted_by_fkey(full_name)
+        creator:profiles!user_id(full_name, workspace, position),
+        accepter:profiles!accepted_by(full_name)
       `)
       .in('status', ['open', 'accepted']);
 
@@ -319,8 +319,8 @@ const ShiftsPage: React.FC = () => {
       setExchanges(simpleData || []);
     } else {
       const sorted = (data || []).sort((a, b) => {
-        const profA = (a as any).profiles;
-        const profB = (b as any).profiles;
+        const profA = (a as any).creator;
+        const profB = (b as any).creator;
         const workspaceA = profA?.workspace || '';
         const workspaceB = profB?.workspace || '';
         if (workspaceA !== workspaceB) return workspaceA.localeCompare(workspaceB, 'es');
@@ -663,7 +663,7 @@ const ShiftsPage: React.FC = () => {
     if (!user || !userProfile) return;
 
     // Validation: Same Center and Same Position
-    const exchangeProfile = (exchange as any).profiles;
+    const exchangeProfile = (exchange as any).creator;
     if (exchangeProfile) {
       if (exchangeProfile.workspace !== userProfile.workspace || exchangeProfile.position !== userProfile.position) {
         setConfirmModal({
@@ -709,13 +709,19 @@ const ShiftsPage: React.FC = () => {
         }
 
         // 2. Mark exchange as accepted and store who accepted it
-        await supabase
+        const { error: exchangeError } = await supabase
           .from('shift_exchanges')
           .update({
             status: 'accepted',
             accepted_by: user.id
           })
           .eq('id', exchange.id);
+
+        if (exchangeError) {
+          console.error("Error updating exchange", exchangeError);
+          alert("Error al actualizar el estado del cambio: " + exchangeError.message);
+          return;
+        }
 
         setConfirmModal({
           show: true,
@@ -1501,7 +1507,7 @@ const ShiftsPage: React.FC = () => {
           )}
 
           {exchanges.filter(ex =>
-            filterWorkspace === 'all' || (ex as any).profiles?.workspace === filterWorkspace
+            filterWorkspace === 'all' || (ex as any).creator?.workspace === filterWorkspace
           ).length === 0 ? (
             <div className="text-center py-20 bg-white dark:bg-surface-dark rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
               <span className="material-symbols-outlined text-[64px] mb-4 text-gray-300">
@@ -1521,7 +1527,7 @@ const ShiftsPage: React.FC = () => {
           ) : (
             <div className="flex flex-col gap-4">
               {exchanges
-                .filter(ex => filterWorkspace === 'all' || (ex as any).profiles?.workspace === filterWorkspace)
+                .filter(ex => filterWorkspace === 'all' || (ex as any).creator?.workspace === filterWorkspace)
                 .map(ex => {
                   const typeData = SHIFT_TYPES.find(t => t.type === ex.offering_shift_type);
                   return (
@@ -1535,9 +1541,9 @@ const ShiftsPage: React.FC = () => {
                             <span className="material-symbols-outlined text-gray-500">person</span>
                           </div>
                           <div>
-                            <p className="text-sm font-bold dark:text-white">{(ex as any).profiles?.full_name || 'Compañero'}</p>
+                            <p className="text-sm font-bold dark:text-white">{(ex as any).creator?.full_name || 'Compañero'}</p>
                             <p className="text-[10px] text-primary font-bold uppercase tracking-tight">
-                              {(ex as any).profiles?.workspace || 'N/A'} · {(ex as any).profiles?.position || 'N/A'}
+                              {(ex as any).creator?.workspace || 'N/A'} · {(ex as any).creator?.position || 'N/A'}
                             </p>
                             <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5">{new Date(ex.offering_date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
                           </div>
