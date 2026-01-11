@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { Message, Attachment } from "../types";
 
-// Keys
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
+// Keys (Vite exposes VITE_ prefixed keys, but we check both just in case)
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || '';
+const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY || import.meta.env.GROQ_API_KEY || '';
 
 // Initialize Gemini Client
 const genAI = new GoogleGenerativeAI(GEMINI_KEY);
