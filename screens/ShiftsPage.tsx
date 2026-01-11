@@ -1125,7 +1125,9 @@ const ShiftsPage: React.FC = () => {
                       QUITAR
                     </button>
                     {LEAVE_TYPES.map(leave => {
-                      const used = (Object.values(shifts) as ShiftRecord[]).filter(s => s.leave_type === leave.type).length;
+                      const used = (Object.values(shifts) as ShiftRecord[])
+                        .filter(s => s.leave_type === leave.type)
+                        .reduce((acc, s) => (s.shift_type === 'M/T' || s.shift_type === 'M/N' ? acc + 2 : acc + 1), 0);
                       let limit = 0;
                       if (leave.type === 'vacation') limit = userProfile?.vacation_days_limit || 22;
                       if (leave.type === 'seniority') limit = userProfile?.seniority_days_limit || 6;
