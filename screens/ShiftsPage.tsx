@@ -308,14 +308,14 @@ const ShiftsPage: React.FC = () => {
       .from('shift_exchanges')
       .select(`
         *,
-        profiles!inner(full_name, workspace, position)
+        profiles!shift_exchanges_user_id_fkey(full_name, workspace, position),
+        accepter:profiles!shift_exchanges_accepted_by_fkey(full_name)
       `)
-      .eq('status', 'open');
+      .in('status', ['open', 'accepted']);
 
     if (error) {
       console.error('Error fetching exchanges:', error);
-      // If it's a join error, try a simpler fetch as fallback
-      const { data: simpleData } = await supabase.from('shift_exchanges').select('*').eq('status', 'open');
+      const { data: simpleData } = await supabase.from('shift_exchanges').select('*').in('status', ['open', 'accepted']);
       setExchanges(simpleData || []);
     } else {
       const sorted = (data || []).sort((a, b) => {
@@ -327,7 +327,9 @@ const ShiftsPage: React.FC = () => {
 
         const positionA = profA?.position || '';
         const positionB = profB?.position || '';
-        return positionA.localeCompare(positionB, 'es');
+        if (positionA !== positionB) return positionA.localeCompare(positionB, 'es');
+
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       setExchanges(sorted);
     }
@@ -658,7 +660,23 @@ const ShiftsPage: React.FC = () => {
   };
 
   const handleAcceptExchange = async (exchange: ShiftExchange) => {
-    if (!user) return;
+    if (!user || !userProfile) return;
+
+    // Validation: Same Center and Same Position
+    const exchangeProfile = (exchange as any).profiles;
+    if (exchangeProfile) {
+      if (exchangeProfile.workspace !== userProfile.workspace || exchangeProfile.position !== userProfile.position) {
+        setConfirmModal({
+          show: true,
+          title: 'Acceso Denegado',
+          message: 'Solo puedes aceptar cambios de compañeros que pertenezcan a tu mismo Centro de Trabajo y tengan tu mismo Puesto de Trabajo.',
+          type: 'error',
+          onConfirm: () => setConfirmModal(prev => ({ ...prev, show: false }))
+        });
+        return;
+      }
+    }
+
     if (exchange.user_id === user.id) {
       alert("No puedes aceptar tu propia oferta.");
       return;
@@ -690,10 +708,13 @@ const ShiftsPage: React.FC = () => {
           return;
         }
 
-        // 2. Mark exchange as accepted
+        // 2. Mark exchange as accepted and store who accepted it
         await supabase
           .from('shift_exchanges')
-          .update({ status: 'accepted' })
+          .update({
+            status: 'accepted',
+            accepted_by: user.id
+          })
           .eq('id', exchange.id);
 
         setConfirmModal({
@@ -1545,19 +1566,28 @@ const ShiftsPage: React.FC = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleAcceptExchange(ex)}
-                          className="flex-1 bg-primary text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-                        >
-                          <span className="material-symbols-outlined text-sm">check_circle</span>
-                          Aceptar
-                        </button>
-                        <button
-                          onClick={() => window.open(`https://wa.me/?text=Hola, estoy interesado en tu cambio de CSIF para el día ${ex.offering_date}`, '_blank')}
-                          className="flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-                        >
-                          <span className="material-symbols-outlined text-sm">chat</span>
-                        </button>
+                        {ex.status === 'accepted' ? (
+                          <div className="flex-1 flex flex-col items-center justify-center p-2.5 rounded-xl border border-red-100 bg-red-50 dark:bg-red-900/10">
+                            <span className="text-[10px] font-black uppercase text-red-600 dark:text-red-400">Aceptado por:</span>
+                            <span className="text-sm font-bold text-red-700 dark:text-red-300">{(ex as any).accepter?.full_name || 'Compañero'}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleAcceptExchange(ex)}
+                              className="flex-1 bg-primary text-white py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                            >
+                              <span className="material-symbols-outlined text-sm">check_circle</span>
+                              Aceptar
+                            </button>
+                            <button
+                              onClick={() => window.open(`https://wa.me/?text=Hola, estoy interesado en tu cambio de CSIF para el día ${ex.offering_date}`, '_blank')}
+                              className="flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-sm">chat</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   );

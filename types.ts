@@ -38,7 +38,8 @@ export interface ShiftExchange {
   offering_shift_type: ShiftType;
   requesting_date?: string;
   description?: string;
-  status: 'open' | 'fulfilled' | 'cancelled';
+  status: 'open' | 'accepted' | 'fulfilled' | 'cancelled';
+  accepted_by?: string;
   created_at: string;
 }
 
